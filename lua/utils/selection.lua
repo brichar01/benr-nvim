@@ -1,27 +1,55 @@
 local M = {}
 
---- @param types table target types, traverse until one is found
+--- @param node TSNode
 ---
---- @param pos [integer, integer] (0, 0) indexed cursor position (eg. from vim.api.nvim_win_get_cursor(0))
+--- @return integer, integer 1-indexed first and last line
+function M.node_lines(node)
+  local start_r, _, end_r, end_c = node:range()
+  if end_c == 0 then end_r = end_r - 1 end
+  return start_r + 1, end_r + 1
+end
+
+--- @param node TSNode
+---
+--- @param types string[]|fun(node: TSNode): boolean node types, or a predicate
+local function matches(node, types)
+  if type(types) == "function" then return types(node) end
+  for _, name in ipairs(types) do
+    if name == node:type() then return true end
+  end
+  return false
+end
+
+--- @param types string[]|fun(node: TSNode): boolean target types, or a predicate, traverse until one is found
+---
+--- @param pos [integer, integer] (1, 0) indexed cursor position (eg. from vim.api.nvim_win_get_cursor(0))
 ---
 --- @param buf integer? buffer index, 0 for current buffer
 ---
----@return TSNode? Node found, or nil if none are found
-function M.parent_by_type(types, pos, buf)
+--- @param range [integer, integer]? 1-indexed lines already selected, the node found must extend past them
+---
+---@return TSNode? Innermost node at `pos` of a target type, or nil if none are found
+function M.parent_by_type(types, pos, buf, range)
+  buf = buf or 0
   local row, col = unpack(pos)
-  local parser = vim.treesitter.get_parser(buf or 0)
+  local parser = vim.treesitter.get_parser(buf)
   if not parser then return nil end
   parser:parse(true)
 
-  local node = vim.treesitter.get_node({ bufnr = buf or 0, pos = { row - 1, col } })
+  -- Leading whitespace belongs to no node inside the enclosing construct.
+  local line = vim.api.nvim_buf_get_lines(buf, row - 1, row, false)[1] or ""
+  local first = line:find("%S")
+  if first and col < first - 1 then col = first - 1 end
+
+  local node = vim.treesitter.get_node({ bufnr = buf, pos = { row - 1, col } })
 
   while node do
-    node = node:parent()
-    if node then
-      for _, type in ipairs(types) do
-        if type == node:type() then return node end
-      end
+    if matches(node, types) then
+      if not range then return node end
+      local first_line, last_line = M.node_lines(node)
+      if first_line < range[1] or last_line > range[2] then return node end
     end
+    node = node:parent()
   end
   return nil
 end
@@ -141,6 +169,56 @@ M.parent_fallback = {
   "source_file",
   "translation_unit",
 }
+
+local element_suffixes = { "_statement$", "_declaration$", "_definition$", "_item$" }
+local element_types = { declaration = true, preproc_include = true, preproc_def = true }
+local body_types = { compound_statement = true, statement_block = true }
+-- Lua has no statement node for a bare call: it is a `function_call` directly under the block.
+local statement_parents = { chunk = true, block = true }
+
+--- @param node TSNode
+---
+--- @return boolean true for a function or class definition, declaration or statement
+function M.is_element(node)
+  local node_type = node:type()
+  if body_types[node_type] then return false end
+  if element_types[node_type] then return true end
+  for _, suffix in ipairs(element_suffixes) do
+    if node_type:match(suffix) then return true end
+  end
+  local parent = node:parent()
+  return node_type == "function_call" and parent ~= nil and statement_parents[parent:type()] == true
+end
+
+--- Fields of a wrapper node, such as a decorated or exported definition, that hold the definition.
+local wrapped_fields = { "definition", "declaration" }
+
+--- Text of a node up to its body, on one line, without the trailing `:`, `{` or `=>`.
+--- A node with no body, such as a call or a statement, gives its first line.
+---
+--- @param node TSNode
+---
+--- @param buf integer? buffer index, 0 for current buffer
+---
+--- @return string
+function M.signature(node, buf)
+  buf = buf or 0
+  for _, field in ipairs(wrapped_fields) do
+    node = node:field(field)[1] or node
+  end
+  local body = node:field("body")[1]
+  local text
+  if body then
+    local start_r, start_c = node:start()
+    local end_r, end_c = body:start()
+    text = table.concat(vim.api.nvim_buf_get_text(buf, start_r, start_c, end_r, end_c, {}), " ")
+    text = text:gsub("%s*[:{]%s*$", ""):gsub("%s*=>%s*$", "")
+  else
+    local start_r = node:start()
+    text = vim.api.nvim_buf_get_lines(buf, start_r, start_r + 1, false)[1]
+  end
+  return vim.trim(text:gsub("%s+", " "))
+end
 
 --- @param ft string? filetype to look up (default: current buffer)
 ---

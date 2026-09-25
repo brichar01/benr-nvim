@@ -5,6 +5,7 @@ return {
   },
   opts = {
     ring = { storage = "sqlite" },
+    system_clipboard = { sync_with_ring = false },
   },
   keys = {
     { "<leader>p", "<cmd>YankyRingHistory<cr>", mode = { "n", "x" }, desc = "Open Yank History" },

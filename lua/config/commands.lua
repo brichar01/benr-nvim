@@ -25,9 +25,21 @@ vim.api.nvim_create_user_command("Pipe", function(opts)
   require("utils.insert").cmd_output(opts.args, lines, opts.line2)
 end, { range = true, nargs = "+", complete = "shellcmd" })
 
--- Copy `<path>:<line>` (or `<path>:<line1>-<line2>`) relative to the project root.
+-- With a range, copy `<path>:<line1>-<line2>` relative to the project root. Without one,
+-- copy the signature of the element at the cursor as `<text> [<path>:<line1>-<line2>]`.
 vim.api.nvim_create_user_command("CopyRef", function(opts)
-  local ref = require("utils.path").relative_with_line(opts.line1, opts.line2)
+  local path = require("utils.path")
+  local ref
+  if opts.range > 0 then
+    ref = path.relative_with_line(opts.line1, opts.line2)
+  else
+    local selection = require("utils.selection")
+    local node = selection.parent_by_type(selection.is_element, vim.api.nvim_win_get_cursor(0))
+    if not node then error("no element at the cursor") end
+
+    local first_line, last_line = selection.node_lines(node)
+    ref = ("%s [%s]"):format(selection.signature(node), path.relative_with_line(first_line, last_line))
+  end
   vim.fn.setreg("+", ref)
   vim.notify(ref)
 end, { range = true })
@@ -43,7 +55,7 @@ end, { range = true })
 vim.api.nvim_create_user_command("CopyFile", function()
   local path = require("utils.path").full()
   vim.fn.setreg("+", path)
-  vim.notify("Copied" .. path)
+  vim.notify("Copied " .. path)
 end, { range = true })
 
 vim.api.nvim_create_user_command("Reload", function(opts)
@@ -57,14 +69,15 @@ local function select_command(kind, visual)
   return function(opts)
     local selection = require("utils.selection")
     local pos = opts.range > 0 and { opts.line1, 0 } or vim.api.nvim_win_get_cursor(0)
-    local node = selection.parent_by_type(selection.types_for_kind(kind), pos)
+    local range = opts.range > 0 and { opts.line1, opts.line2 } or nil
+    local node = selection.parent_by_type(selection.types_for_kind(kind), pos, 0, range)
     if node then selection.select_node(node, visual) end
   end
 end
 
 vim.api.nvim_create_user_command("SelectionExpand", function(opts)
   local selection = require("utils.selection")
-  local node = selection.parent_by_type(selection.types_for(), { opts.line1, 0 })
+  local node = selection.parent_by_type(selection.types_for(), { opts.line1, 0 }, 0, { opts.line1, opts.line2 })
   if not node then error("no parent") end
 
   selection.select_node(node)

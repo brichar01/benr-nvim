@@ -8,7 +8,8 @@ return {
     vim.lsp.config("clangd", {
       -- clangd carries no newlib headers. Querying arm-none-eabi-gcc for its
       -- include paths is what resolves assert.h and everything under it.
-      cmd = { "clangd", "--query-driver=/usr/bin/arm-none-eabi-*" },
+      -- Neovim logs all server stderr at ERROR, so clangd's info output floods lsp.log.
+      cmd = { "clangd", "--query-driver=/usr/bin/arm-none-eabi-*", "--log=error" },
     })
   end,
 }

@@ -29,7 +29,7 @@ local function open_workbench(path)
 end
 
 local function new_path()
-  local name = workbench_slug() .. "-" .. os.date("%Y%m%d%H%M%S") .. ".wb"
+  local name = workbench_slug() .. "-" .. os.date("%Y%m%d%H%M%S") .. ".md"
 
   return vim.fs.joinpath(workbench_dir(), name)
 end
@@ -38,7 +38,7 @@ local function new_workbench() open_workbench(new_path()) end
 
 --- @return table this project's workbench paths, in name order
 local function workbench_list()
-  local existing = vim.fn.glob(vim.fs.joinpath(workbench_dir(), workbench_slug() .. "-*.wb"), false, true)
+  local existing = vim.fn.glob(vim.fs.joinpath(workbench_dir(), workbench_slug() .. "-*.md"), false, true)
   table.sort(existing)
 
   return existing

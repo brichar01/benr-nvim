@@ -21,7 +21,7 @@ function M.full()
   local file = vim.api.nvim_buf_get_name(0)
   if file == "" then error("buffer has no file") end
 
-  return vim.fs.path(file)
+  return vim.fs.abspath(file)
 end
 
 return M
