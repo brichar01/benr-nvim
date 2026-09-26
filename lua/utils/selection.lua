@@ -80,8 +80,10 @@ end
 --- Node types for a named construct, keyed by filetype.
 ---
 --- A filetype with no entry for a kind has no such construct, so the command
---- that asks for it does nothing. `container` is not a command: it holds the
---- roots and declarations that complete a filetype's `parent_types` list.
+--- that asks for it does nothing. `literal` and `container` are not commands:
+--- `literal` holds table, struct and collection literals, which bound a
+--- selection but are not part of an outline. `container` holds the roots and
+--- declarations that complete a filetype's `parent_types` list.
 M.node_types = {
   call = {
     python = { "call" },
@@ -89,6 +91,13 @@ M.node_types = {
     rust = { "call_expression", "macro_invocation" },
     lua = { "function_call" },
     typescript = { "call_expression", "new_expression" },
+  },
+  literal = {
+    python = { "dictionary", "list", "set", "tuple" },
+    c = { "initializer_list" },
+    rust = { "struct_expression", "array_expression" },
+    lua = { "table_constructor" },
+    typescript = { "object", "array" },
   },
   method = {
     python = { "function_definition", "decorated_definition" },
@@ -119,7 +128,7 @@ M.node_types = {
       "translation_unit",
     },
     rust = { "union_item", "macro_definition", "mod_item", "source_file" },
-    lua = { "table_constructor", "chunk" },
+    lua = { "chunk" },
     typescript = {
       "type_alias_declaration",
       "enum_declaration",
@@ -132,7 +141,7 @@ M.node_types = {
 
 --- Kinds that make up `parent_types`. A call is asked for by name, never
 --- expanded into.
-local parent_kinds = { "method", "class", "container" }
+local parent_kinds = { "literal", "method", "class", "container" }
 
 --- @param kind string key of `M.node_types`
 ---
@@ -198,11 +207,10 @@ local wrapped_fields = { "definition", "declaration" }
 ---
 --- @param node TSNode
 ---
---- @param buf integer? buffer index, 0 for current buffer
+--- @param lines string[] text the node was parsed from
 ---
 --- @return string
-function M.signature(node, buf)
-  buf = buf or 0
+function M.signature(node, lines)
   for _, field in ipairs(wrapped_fields) do
     node = node:field(field)[1] or node
   end
@@ -211,11 +219,13 @@ function M.signature(node, buf)
   if body then
     local start_r, start_c = node:start()
     local end_r, end_c = body:start()
-    text = table.concat(vim.api.nvim_buf_get_text(buf, start_r, start_c, end_r, end_c, {}), " ")
+    local head = vim.list_slice(lines, start_r + 1, end_r + 1)
+    head[#head] = head[#head]:sub(1, end_c)
+    head[1] = head[1]:sub(start_c + 1)
+    text = table.concat(head, " ")
     text = text:gsub("%s*[:{]%s*$", ""):gsub("%s*=>%s*$", "")
   else
-    local start_r = node:start()
-    text = vim.api.nvim_buf_get_lines(buf, start_r, start_r + 1, false)[1]
+    text = lines[node:start() + 1]
   end
   return vim.trim(text:gsub("%s+", " "))
 end

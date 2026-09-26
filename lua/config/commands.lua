@@ -38,11 +38,47 @@ vim.api.nvim_create_user_command("CopyRef", function(opts)
     if not node then error("no element at the cursor") end
 
     local first_line, last_line = selection.node_lines(node)
-    ref = ("%s [%s]"):format(selection.signature(node), path.relative_with_line(first_line, last_line))
+    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    ref = ("%s [%s]"):format(selection.signature(node, lines), path.relative_with_line(first_line, last_line))
   end
   vim.fn.setreg("+", ref)
   vim.notify(ref)
 end, { range = true })
+
+-- Copy the outline of the buffer, or of only the selected lines, into a register (default `+`).
+vim.api.nvim_create_user_command("CopyOutline", function(opts)
+  local gather = require("utils.gather")
+  local first, last = 0, -1
+  if opts.range > 0 then first, last = opts.line1 - 1, opts.line2 end
+  local lines = vim.api.nvim_buf_get_lines(0, first, last, false)
+
+  local outline = gather.format(gather.nodes(lines, vim.bo.filetype), lines)
+  if #outline == 0 then error("no nodes to outline") end
+
+  local register = opts.args ~= "" and opts.args or "+"
+  vim.fn.setreg(register, outline, "l")
+  vim.notify(("Copied %d outline lines to %s"):format(#outline, register))
+end, { range = true, nargs = "?" })
+
+-- Copy the definitions and references of the symbol at the cursor into a register (default `+`).
+vim.api.nvim_create_user_command("CopySymbol", function(opts)
+  local gather = require("utils.gather")
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local name = vim.fn.expand("<cword>")
+
+  local implementation = gather.implementation(0, pos)
+  local usages = gather.usages(0, pos)
+  if #implementation == 0 and #usages == 0 then error("no definition or references for " .. name) end
+
+  local out = { ("Implementation of %s:"):format(name) }
+  vim.list_extend(out, #implementation > 0 and implementation or { "(none)" })
+  vim.list_extend(out, { "", ("Usages of %s:"):format(name) })
+  vim.list_extend(out, #usages > 0 and usages or { "(none)" })
+
+  local register = opts.args ~= "" and opts.args or "+"
+  vim.fn.setreg(register, out, "l")
+  vim.notify(("Copied %s: %d usage lines to %s"):format(name, #usages, register))
+end, { nargs = "?" })
 
 -- just the relative file path
 vim.api.nvim_create_user_command("CopyRel", function()
