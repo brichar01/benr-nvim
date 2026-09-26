@@ -32,8 +32,7 @@ local function query_for(ft, lang)
     for _, node_type in ipairs(outline_types(ft)) do
       if symbols[node_type] then table.insert(patterns, "(" .. node_type .. ")") end
     end
-    queries[key] = #patterns > 0
-        and vim.treesitter.query.parse(lang, "[" .. table.concat(patterns, " ") .. "] @node")
+    queries[key] = #patterns > 0 and vim.treesitter.query.parse(lang, "[" .. table.concat(patterns, " ") .. "] @node")
       or false
   end
   return queries[key] or nil
@@ -230,11 +229,13 @@ end
 function M.implementation(buf, pos)
   if not buf or buf == 0 then buf = vim.api.nvim_get_current_buf() end
   local out = {}
-  for _, item in ipairs(locations(buf, pos, "textDocument/definition")) do
+  for _, item in ipairs(locations(buf, pos, "textDocument/implementation")) do
     local lines, ft = read(item.filename)
     local node = ft and defining_node(M.nodes(lines, ft), item.lnum - 1)
     local first, last = item.lnum, item.lnum
-    if node then first, last = selection.node_lines(node) end
+    if node then
+      first, last = selection.node_lines(node)
+    end
 
     if #out > 0 then table.insert(out, "") end
     local ref = relative(item.filename) .. ":" .. first

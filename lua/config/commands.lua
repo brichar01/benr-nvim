@@ -49,7 +49,9 @@ end, { range = true })
 vim.api.nvim_create_user_command("CopyOutline", function(opts)
   local gather = require("utils.gather")
   local first, last = 0, -1
-  if opts.range > 0 then first, last = opts.line1 - 1, opts.line2 end
+  if opts.range > 0 then
+    first, last = opts.line1 - 1, opts.line2
+  end
   local lines = vim.api.nvim_buf_get_lines(0, first, last, false)
 
   local outline = gather.format(gather.nodes(lines, vim.bo.filetype), lines)
@@ -70,9 +72,8 @@ vim.api.nvim_create_user_command("CopySymbol", function(opts)
   local usages = gather.usages(0, pos)
   if #implementation == 0 and #usages == 0 then error("no definition or references for " .. name) end
 
-  local out = { ("Implementation of %s:"):format(name) }
+  local out = {}
   vim.list_extend(out, #implementation > 0 and implementation or { "(none)" })
-  vim.list_extend(out, { "", ("Usages of %s:"):format(name) })
   vim.list_extend(out, #usages > 0 and usages or { "(none)" })
 
   local register = opts.args ~= "" and opts.args or "+"
