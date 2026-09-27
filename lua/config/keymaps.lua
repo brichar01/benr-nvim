@@ -101,43 +101,52 @@ km.set(
 
 --- Mildly experimental
 vim.keymap.set("n", "<leader>ns", ":vsplit | Scratch<CR>", { silent = true })
-vim.keymap.set("n", "<leader>nw", ":vsplit | Workbench open<CR>", { silent = true })
-vim.keymap.set("n", "<Leader>ne", "<Cmd>Workbench next<CR>")
-vim.keymap.set("n", "<Leader>nb", "<Cmd>Workbench previous<CR>")
+vim.keymap.set("n", "<leader>nw", ":vsplit | HiveContext workbench open<CR>", { silent = true })
+vim.keymap.set("n", "<Leader>ne", "<Cmd>HiveContext workbench next<CR>")
+vim.keymap.set("n", "<Leader>nb", "<Cmd>HiveContext workbench previous<CR>")
 vim.keymap.set("x", "<leader>nr", ":Run<CR>", { silent = true })
 vim.keymap.set("n", "<leader>nr", "<Cmd>Run<CR>", { silent = true })
 
-vim.keymap.set("n", "<leader>nf", "<Cmd>WorkbenchFim<CR>", { silent = true })
+vim.keymap.set("n", "<leader>nf", "<Cmd>HiveContext fim<CR>", { silent = true })
 
 -- Copy filepaths
-vim.keymap.set({ "n" }, "<leader>spr", "<Cmd>CopyRef<CR>", { silent = true })
-vim.keymap.set("x", "<leader>spr", ":CopyRef<CR>", { silent = true })
+vim.keymap.set({ "n" }, "<leader>spr", "<Cmd>HiveContext ref<CR>", { silent = true })
+vim.keymap.set("x", "<leader>spr", ":HiveContext ref<CR>", { silent = true })
 
-vim.keymap.set({ "n" }, "<leader>spf", "<Cmd>CopyRel<CR>", { silent = true })
-vim.keymap.set("x", "<leader>spf", ":CopyRel<CR>", { silent = true })
+vim.keymap.set({ "n" }, "<leader>spf", "<Cmd>HiveContext rel<CR>", { silent = true })
+vim.keymap.set("x", "<leader>spf", ":HiveContext rel<CR>", { silent = true })
 
-vim.keymap.set({ "n" }, "<leader>spp", "<Cmd>CopyFile<CR>", { silent = true })
-vim.keymap.set("x", "<leader>spp", ":CopyFile<CR>", { silent = true })
+vim.keymap.set({ "n" }, "<leader>spp", "<Cmd>HiveContext file<CR>", { silent = true })
+vim.keymap.set("x", "<leader>spp", ":HiveContext file<CR>", { silent = true })
 
 -- Selection by treesitter node
-vim.keymap.set({ "n", "x" }, "vs<Left>", function()
-  local selection = require("utils.selection")
-  local node = selection.parent_by_type(selection.types_for(), vim.api.nvim_win_get_cursor(0))
-  if not node then error("no parent") end
+vim.keymap.set(
+  { "n", "x" },
+  "vs<Left>",
+  "<Cmd>HiveContext select parent<CR>",
+  { desc = "Select current method, class, etc.", noremap = true }
+)
 
-  selection.select_node(node)
-end, { desc = "Select current method, class, etc.", noremap = true })
+vim.keymap.set(
+  "x",
+  "<C-Left>",
+  ":HiveContext select parent<CR>",
+  { desc = "Expand to next method, class, etc.", noremap = true }
+)
 
-vim.keymap.set("x", "<C-Left>", ":SelectionExpand<CR>", { desc = "Expand to next method, class, etc.", noremap = true })
+vim.keymap.set("n", "vsi", "<Cmd>HiveContext select call<CR>", { desc = "Select the enclosing call", silent = true })
+vim.keymap.set("x", "vsi", ":HiveContext select call<CR>", { desc = "Expand to the enclosing call", silent = true })
 
-vim.keymap.set("n", "vsi", "<Cmd>SelectCall<CR>", { desc = "Select the enclosing call", silent = true })
-vim.keymap.set("x", "vsi", ":SelectCall<CR>", { desc = "Expand to the enclosing call", silent = true })
+vim.keymap.set(
+  "n",
+  "vsm",
+  "<Cmd>HiveContext select method<CR>",
+  { desc = "Select the enclosing method", silent = true }
+)
+vim.keymap.set("x", "vsm", ":HiveContext select method<CR>", { desc = "Expand to the enclosing method", silent = true })
 
-vim.keymap.set("n", "vsm", "<Cmd>SelectMethod<CR>", { desc = "Select the enclosing method", silent = true })
-vim.keymap.set("x", "vsm", ":SelectMethod<CR>", { desc = "Expand to the enclosing method", silent = true })
-
-vim.keymap.set("n", "vsc", "<Cmd>SelectClass<CR>", { desc = "Select the enclosing class", silent = true })
-vim.keymap.set("x", "vsc", ":SelectClass<CR>", { desc = "Expand to the enclosing class", silent = true })
+vim.keymap.set("n", "vsc", "<Cmd>HiveContext select class<CR>", { desc = "Select the enclosing class", silent = true })
+vim.keymap.set("x", "vsc", ":HiveContext select class<CR>", { desc = "Expand to the enclosing class", silent = true })
 
 -- LSP
 vim.keymap.set("n", "gri", function()
