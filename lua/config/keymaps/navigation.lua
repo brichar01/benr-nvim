@@ -31,7 +31,7 @@ km.set("n", "<Leader>tt", "<Cmd>bnext<CR>", { desc = "Next buffer" })
 km.set("n", "<Leader>ts", "<Cmd>bprevious<CR>", { desc = "Previous Buffer" })
 
 -- LSP
-vim.keymap.set("n", "gri", function()
+km.set("n", "gri", function()
   local clients = vim.lsp.get_clients({ bufnr = 0, method = "textDocument/implementation" })
   if #clients == 0 then return end
   vim.lsp.buf.implementation()

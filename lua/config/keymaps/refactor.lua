@@ -14,7 +14,6 @@ km.set(
   function() return require("refactoring").extract_func() .. "_" end,
   { desc = "Extract Function (line)", expr = true }
 )
- w
 km.set(
   { "n", "x" },
   "<leader>rE",
