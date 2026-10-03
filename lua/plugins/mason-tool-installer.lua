@@ -9,7 +9,7 @@ return {
       "clangd",
       "clang-format",
       "prettier",
-      "tsgo",
+      "tsc",
       "bash-language-server",
     },
   },

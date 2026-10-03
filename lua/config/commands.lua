@@ -1,5 +1,4 @@
 --- Custom Commands
-
 vim.api.nvim_create_user_command("Scratch", require("utils.scratch").scratch, {})
 
 -- Run and append
@@ -21,3 +20,9 @@ vim.api.nvim_create_user_command("Reload", function(opts)
   package.loaded[module_name] = nil
   require(module_name)
 end, { nargs = 1 })
+
+vim.api.nvim_create_user_command(
+  "TelescopeVisualGrep",
+  function() require("utils.telescope_selection").telescope_visual_grep() end,
+  { range = true }
+)
