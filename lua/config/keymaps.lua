@@ -1,3 +1,4 @@
+require("config.keymaps.agent")
 require("config.keymaps.clipboard")
 require("config.keymaps.gitsigns")
 require("config.keymaps.navigation")

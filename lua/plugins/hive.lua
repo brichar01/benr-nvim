@@ -3,11 +3,8 @@ return {
   dir = "/home/benri/src/hive.nvim",
   main = "hive",
   lazy = false,
-  opts = {
-    base_url = "https://api.mistral.ai",
-    model = "codestral-latest",
-    api_key_env = "MISTRAL_API_KEY",
-    api_key = function()
+  opts = function()
+    local function mistral_key()
       if vim.fn.executable("secret-tool") ~= 1 then return nil end
 
       local out = vim
@@ -17,8 +14,20 @@ return {
 
       local key = vim.trim(out.stdout or "")
       return key ~= "" and key or nil
-    end,
-  },
+    end
+
+    return {
+      base_url = "https://api.mistral.ai",
+      model = "codestral-latest",
+      api_key_env = "MISTRAL_API_KEY",
+      api_key = mistral_key,
+      agent = {
+        api_key = mistral_key,
+        model = "codestral-latest",
+        effort = "high",
+      },
+    }
+  end,
   keys = {
     {
       "<leader>rb",

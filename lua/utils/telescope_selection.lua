@@ -21,7 +21,7 @@ end
 
 --- Search the current visual selection with telescope's grep.
 function M.telescope_visual_grep()
-  local search = get_visual_selection()
+  local search = M.get_visual_selection()
   if search == "" then return end
   require("telescope.builtin").live_grep({ default_text = search })
 end
