@@ -18,12 +18,12 @@ return {
 
     return {
       base_url = "https://api.deepseek.com/chat/completions",
-      model = "codestral-latest",
+      model = "deepseek-flash",
       api_key_env = "DEEPSEEK_API_KEY",
       api_key = deepseek_key,
       agent = {
         api_key = deepseek_key,
-        model = "DeepSeek-V4.1-Flash",
+        model = "deepseek-flash",
         effort = "low",
       },
     }
