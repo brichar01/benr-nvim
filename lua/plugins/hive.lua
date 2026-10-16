@@ -4,11 +4,11 @@ return {
   main = "hive",
   lazy = false,
   opts = function()
-    local function mistral_key()
+    local function deepseek_key()
       if vim.fn.executable("secret-tool") ~= 1 then return nil end
 
       local out = vim
-        .system({ "secret-tool", "lookup", "service", "mistral", "key", "api" }, { text = true, timeout = 10000 })
+        .system({ "secret-tool", "lookup", "service", "deepseek", "key", "api" }, { text = true, timeout = 10000 })
         :wait()
       if out.code ~= 0 then return nil end
 
@@ -17,14 +17,14 @@ return {
     end
 
     return {
-      base_url = "https://api.mistral.ai",
+      base_url = "https://api.deepseek.com/chat/completions",
       model = "codestral-latest",
-      api_key_env = "MISTRAL_API_KEY",
-      api_key = mistral_key,
+      api_key_env = "DEEPSEEK_API_KEY",
+      api_key = deepseek_key,
       agent = {
-        api_key = mistral_key,
-        model = "codestral-latest",
-        effort = "high",
+        api_key = deepseek_key,
+        model = "DeepSeek-V4.1-Flash",
+        effort = "low",
       },
     }
   end,

@@ -21,6 +21,12 @@ return {
       javascript = { "prettierd", "prettier", stop_after_first = true },
       typescript = { "prettierd", "prettier", stop_after_first = true },
       proto = { "clang-format" },
+      markdown = { "prettier" },
+    },
+    formatters = {
+      prettier = {
+        prepend_args = { "--prose-wrap", "always", "--print-width", "120" },
+      },
     },
     default_format_opts = { lsp_format = "fallback" },
     format_on_save = { timeout_ms = 500 },
