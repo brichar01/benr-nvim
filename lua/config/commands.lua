@@ -26,3 +26,32 @@ vim.api.nvim_create_user_command(
   function() require("utils.telescope_selection").telescope_visual_grep() end,
   { range = true }
 )
+
+-- Find files in the current west workspace, including projects ignored by the
+-- top-level .gitignore, or fall back to a regular find if there is no manifest.
+vim.api.nvim_create_user_command("WestFindFiles", function()
+  local builtin = require("telescope.builtin")
+  local find_command = { "rg", "--iglob", "!.git", "--hidden", "--files" }
+  local manifest = vim.fn.getcwd() .. "/manifest/west.yml"
+
+  if vim.fn.filereadable(manifest) == 0 or vim.fn.executable("yq") ~= 1 then
+    builtin.find_files({ find_command = find_command })
+    return
+  end
+
+  local output = vim.system({ "yq", "-r", ".manifest.projects[] | .path // .name", manifest }, { text = true }):wait()
+
+  local search_dirs = { "." }
+  local seen = { ["."] = true }
+  if output.code == 0 then
+    for _, path in ipairs(vim.split(vim.trim(output.stdout or ""), "\n", { trimempty = true })) do
+      path = vim.trim(path)
+      if path ~= "" and not seen[path] and vim.fn.isdirectory(path) == 1 then
+        seen[path] = true
+        table.insert(search_dirs, path)
+      end
+    end
+  end
+
+  builtin.find_files({ find_command = find_command, search_dirs = search_dirs })
+end, { desc = "Find files in a west workspace" })
