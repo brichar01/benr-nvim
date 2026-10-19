@@ -1,8 +1,6 @@
-local hive_dir = vim.env.HIVE_DEV and vim.fn.getcwd() .. "/hive.nvim" or "/home/benri/src/hive.nvim"
-
 return {
-  "hive.nvim",
-  dir = hive_dir,
+  "brichar01/hive.nvim",
+  dev = vim.env.HIVE_DEV and { path = vim.fn.getcwd() .. "/hive.nvim" } or false,
   main = "hive",
   lazy = false,
   opts = function()
