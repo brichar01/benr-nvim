@@ -55,3 +55,20 @@ vim.api.nvim_create_user_command("WestFindFiles", function()
 
   builtin.find_files({ find_command = find_command, search_dirs = search_dirs })
 end, { desc = "Find files in a west workspace" })
+
+-- Insert an empty markdown table of <col> columns, a header and <row> body rows
+vim.api.nvim_create_user_command("Table", function(opts)
+  local cols, rows = tonumber(opts.fargs[1]), tonumber(opts.fargs[2])
+  if not cols or not rows or cols < 1 or rows < 0 then
+    vim.notify("Usage: Table <col> <row>", vim.log.levels.ERROR)
+    return
+  end
+
+  local empty = "|" .. string.rep("     |", cols)
+  local lines = { empty, "|" .. string.rep(" --- |", cols) }
+  for _ = 1, rows do
+    table.insert(lines, empty)
+  end
+
+  vim.api.nvim_put(lines, "l", true, false)
+end, { nargs = "+", desc = "Insert a markdown table" })
