@@ -9,6 +9,7 @@ return {
       "clangd",
       "clang-format",
       "prettier",
+      "rumdl",
       "tsc",
       "bash-language-server",
     },
