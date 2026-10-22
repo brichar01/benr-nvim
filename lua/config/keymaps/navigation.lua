@@ -31,8 +31,34 @@ km.set("n", "<Leader>tt", "<Cmd>bnext<CR>", { desc = "Next buffer" })
 km.set("n", "<Leader>ts", "<Cmd>bprevious<CR>", { desc = "Previous Buffer" })
 
 -- LSP
+local function has_lsp_locations(results)
+  for _, res in pairs(results) do
+    if res.result and not vim.tbl_isempty(res.result) then return true end
+  end
+  return false
+end
+
+km.set("n", "grd", vim.lsp.buf.definition, { desc = "Go to definition" })
+
 km.set("n", "gri", function()
-  local clients = vim.lsp.get_clients({ bufnr = 0, method = "textDocument/implementation" })
+  local bufnr = vim.api.nvim_get_current_buf()
+  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = "textDocument/implementation" })
   if #clients == 0 then return end
-  vim.lsp.buf.implementation()
-end, { desc = "Go to implementation" })
+
+  vim.lsp.buf_request_all(
+    bufnr,
+    "textDocument/implementation",
+    function(client) return vim.lsp.util.make_position_params(0, client.offset_encoding) end,
+    function(results)
+      if has_lsp_locations(results) then
+        vim.lsp.buf.implementation()
+      elseif vim.bo[bufnr].filetype == "c" then
+        -- clangd returns no implementations for plain C functions.
+        -- Fall back to clangd's source/header switch instead.
+        vim.api.nvim_buf_call(bufnr, function() vim.cmd("LspClangdSwitchSourceHeader") end)
+      else
+        vim.notify("No locations found", vim.log.levels.INFO)
+      end
+    end
+  )
+end, { desc = "Go to implementation (C: fallback to source/header)" })
