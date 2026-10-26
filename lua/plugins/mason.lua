@@ -3,5 +3,6 @@
 ---@type LazySpec
 return {
   "mason-org/mason.nvim",
-  opts = {},
+  -- Append so a project's dev shell tools, such as a pinned clang-format, win over Mason's.
+  opts = { PATH = "append" },
 }

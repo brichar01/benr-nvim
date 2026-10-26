@@ -4,6 +4,9 @@ vim.api.nvim_create_user_command("Scratch", require("utils.scratch").scratch, {}
 -- Run and append
 vim.api.nvim_create_user_command("Run", function(opts)
   local lines = vim.api.nvim_buf_get_lines(0, opts.line1 - 1, opts.line2, false)
+  for i, line in ipairs(lines) do
+    lines[i] = line:gsub("^(%s*)%$%s?", "%1")
+  end
 
   require("utils.insert").cmd_output(table.concat(lines, "\n"), nil, opts.line2)
 end, { range = true })

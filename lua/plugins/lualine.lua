@@ -14,6 +14,13 @@ return {
         },
         "encoding",
         "fileformat",
+        {
+          function()
+            local ok, scope = pcall(require, "hive.context.scope")
+            if not ok then return "" end
+            return table.concat(vim.tbl_map(function(link) return link.name end, scope.chain()), ".")
+          end,
+        },
         "filetype",
       },
     },
