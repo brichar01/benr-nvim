@@ -75,3 +75,9 @@ vim.api.nvim_create_user_command("Table", function(opts)
 
   vim.api.nvim_put(lines, "l", true, false)
 end, { nargs = "+", desc = "Insert a markdown table" })
+
+vim.api.nvim_create_user_command(
+  "BackspaceSubword",
+  function() vim.cmd.normal({ require("utils.subword").normal_keys(), bang = true }) end,
+  { desc = "Delete the subword before the cursor" }
+)
