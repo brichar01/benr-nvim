@@ -11,6 +11,40 @@ vim.api.nvim_create_user_command("Run", function(opts)
   require("utils.insert").cmd_output(table.concat(lines, "\n"), nil, opts.line2)
 end, { range = true })
 
+-- Render the mermaid definition at the cursor, or in the range, into <cwd>/diagram-<n>.svg
+vim.api.nvim_create_user_command("Mermaid", function(opts)
+  if vim.fn.executable("mmdc") ~= 1 then
+    vim.notify("mmdc (mermaid-cli) is not installed", vim.log.levels.ERROR)
+    return
+  end
+
+  local lines
+
+  -- No range means the cursor, so render the fenced block it sits in.
+  if opts.range == 0 then
+    lines = require("utils.mermaid").fence_lines(0, vim.api.nvim_win_get_cursor(0))
+  end
+  lines = lines or vim.api.nvim_buf_get_lines(0, opts.line1 - 1, opts.line2, false)
+
+  local n, out = 0, nil
+  repeat
+    n = n + 1
+    out = string.format("diagram-%d.svg", n)
+  until vim.fn.filereadable(out) == 0
+
+  local result = vim.system(
+    { "mmdc", "--input", "-", "--output", out },
+    { text = true, stdin = table.concat(lines, "\n") }
+  ):wait()
+
+  if result.code ~= 0 then
+    vim.notify((result.stderr or result.stdout or "mmdc failed"):gsub("\n$", ""), vim.log.levels.ERROR)
+    return
+  end
+
+  vim.notify("Mermaid diagram written to " .. vim.fn.getcwd() .. "/" .. out)
+end, { range = true, desc = "Render the fenced mermaid block at the cursor, or the range, to an SVG" })
+
 -- Pipe into command
 vim.api.nvim_create_user_command("Pipe", function(opts)
   local lines = vim.api.nvim_buf_get_lines(0, opts.line1 - 1, opts.line2, false)
