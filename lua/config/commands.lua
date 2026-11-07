@@ -33,7 +33,17 @@ vim.api.nvim_create_user_command("Mermaid", function(opts)
   until vim.fn.filereadable(out) == 0
 
   local result = vim.system(
-    { "mmdc", "--input", "-", "--output", out },
+    -- htmlLabels off so the SVG uses <text> instead of <foreignObject>, which
+    -- rasterizers like ImageMagick (image.nvim's magick_cli) cannot render.
+    {
+      "mmdc",
+      "--input",
+      "-",
+      "--output",
+      out,
+      "--configFile",
+      vim.fs.joinpath(vim.fn.stdpath("config"), "mermaid.json"),
+    },
     { text = true, stdin = table.concat(lines, "\n") }
   ):wait()
 

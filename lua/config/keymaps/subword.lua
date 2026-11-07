@@ -8,5 +8,11 @@ km.set(
   function() return ("<BS>"):rep(subword.length_before_cursor()) end,
   { expr = true, desc = "Backspace subword" }
 )
+km.set(
+  "i",
+  "<C-BS>",
+  function() return ("<BS>"):rep(subword.length_before_cursor()) end,
+  { expr = true, desc = "Backspace subword" }
+)
 
 km.set("n", "ds", subword.normal_keys, { expr = true, desc = "Backspace subword" })
